@@ -35,6 +35,7 @@ import {
   Dialog,
   DialogContent,
   DialogFooter,
+  DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
@@ -1736,9 +1737,9 @@ export default function PricingDetailsPage() {
                     </DialogTrigger>
                     <DialogContent>
                       <div className="p-4">
-                        <h2 className="text-lg font-bold mb-4">
+                        <DialogTitle className="text-lg font-bold mb-4">
                           Confirm Approval
-                        </h2>
+                        </DialogTitle>
                         <p>
                           Are you sure you want to approve this deal? After you
                           confirm, the details cannot be changed.

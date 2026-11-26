@@ -70,13 +70,20 @@ export default function CustomerCard({ customer, onChange }) {
   const [description, setDescription] = useState("");
 
   const handleDeleteCustomer = async () => {
-    const { error } = await supabase.from("Customers").delete().eq("id", customer.id);
-    if (error) {
-      toast.error("Error deleting customer");
-    } else {
+    try {
+      const res = await fetch(`/api/customers/${encodeURIComponent(customer.id)}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        toast.error("Error deleting customer");
+        return;
+      }
       toast.success("Customer deleted");
+      setDeleteOpen(false);
       setOpen(false);
-      onChange();
+      await onChange?.();
+    } catch {
+      toast.error("Error deleting customer");
     }
   };
 
@@ -210,7 +217,7 @@ export default function CustomerCard({ customer, onChange }) {
                 </AvatarFallback>
               </Avatar>
               <div className="min-w-0">
-                <h2 className="text-lg font-bold text-slate-900 dark:text-white truncate">{customer?.name}</h2>
+                <DialogTitle className="text-lg font-bold text-slate-900 dark:text-white truncate">{customer?.name}</DialogTitle>
                 <Badge className={`mt-0.5 ${STATUS_COLOR[customer.status] || "bg-slate-400"} text-white border-0 text-[10px] h-5`}>
                   {customer.status}
                 </Badge>
@@ -355,23 +362,21 @@ export default function CustomerCard({ customer, onChange }) {
                       <button
                         onClick={() => handleStageClick(stage)}
                         disabled={!isFuture || updatingStatus}
-                        className={`group relative flex items-center gap-2 px-4 py-2 rounded-xl border-2 transition-all duration-300 ${
-                          isCurrent
-                            ? "bg-teal-500 border-teal-500 text-white shadow-lg shadow-teal-500/25 scale-105 z-10"
-                            : isCompleted
+                        className={`group relative flex items-center gap-2 px-4 py-2 rounded-xl border-2 transition-all duration-300 ${isCurrent
+                          ? "bg-teal-500 border-teal-500 text-white shadow-lg shadow-teal-500/25 scale-105 z-10"
+                          : isCompleted
                             ? "bg-teal-50 dark:bg-teal-900/20 border-teal-200 dark:border-teal-800 text-teal-600 dark:text-teal-400 opacity-80"
                             : isFuture
-                            ? "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-teal-400 hover:shadow-md hover:scale-105 hover:z-20 cursor-pointer"
-                            : "bg-slate-50 dark:bg-slate-900/50 border-slate-100 dark:border-slate-800 text-slate-400 opacity-40 cursor-not-allowed"
-                        } ${updatingStatus ? "opacity-50 cursor-not-allowed" : ""}`}
+                              ? "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-teal-400 hover:shadow-md hover:scale-105 hover:z-20 cursor-pointer"
+                              : "bg-slate-50 dark:bg-slate-900/50 border-slate-100 dark:border-slate-800 text-slate-400 opacity-40 cursor-not-allowed"
+                          } ${updatingStatus ? "opacity-50 cursor-not-allowed" : ""}`}
                       >
-                        <div className={`flex items-center justify-center w-4 h-4 rounded-full text-[9px] font-bold ${
-                          isCurrent ? "bg-white text-teal-500" : isCompleted ? "bg-teal-100 dark:bg-teal-800 text-teal-600" : "bg-slate-100 dark:bg-slate-700 text-slate-400"
-                        }`}>
+                        <div className={`flex items-center justify-center w-4 h-4 rounded-full text-[9px] font-bold ${isCurrent ? "bg-white text-teal-500" : isCompleted ? "bg-teal-100 dark:bg-teal-800 text-teal-600" : "bg-slate-100 dark:bg-slate-700 text-slate-400"
+                          }`}>
                           {idx + 1}
                         </div>
                         <span className="text-[11px] font-bold uppercase tracking-tighter whitespace-nowrap">{stage}</span>
-                        
+
                         {/* Hover Pulse for Next Step */}
                         {isNext && (
                           <span className="absolute inset-0 rounded-xl bg-teal-400/10 animate-pulse" />
@@ -409,6 +414,7 @@ export default function CustomerCard({ customer, onChange }) {
       {/* Email Modal */}
       <Dialog open={emailOpen} onOpenChange={setEmailOpen}>
         <DialogContent className="w-[95vw] sm:max-w-4xl h-[90vh] sm:h-[85vh] p-0 overflow-hidden border-0 shadow-2xl mx-auto">
+          <DialogTitle className="sr-only">New Email Message</DialogTitle>
           <EmailTemplate
             type="Customers"
             id={customer.id}
@@ -1794,7 +1800,7 @@ export default function CustomerCard({ customer, onChange }) {
 
 
 
-// old one 
+// old one
 // "use client";
 
 // import { useState } from "react";

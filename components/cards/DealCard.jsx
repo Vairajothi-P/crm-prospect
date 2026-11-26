@@ -167,14 +167,21 @@ export default function DealCard({
   };
 
   const handleDeleteDeal = async () => {
-    const { error } = await supabase.from("Deals").delete().eq("id", deal.id);
-    if (error) {
-      toast.error("Error deleting deal");
-    } else {
+    try {
+      const res = await fetch(`/api/deals/${encodeURIComponent(deal.id)}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        toast.error("Error deleting deal");
+        return;
+      }
       toast.success("Deleted");
+      setDeleteOpen(false);
       setOpen(false);
-      await fetchDeals();
-      onChange();
+      await fetchDeals?.();
+      await onChange?.();
+    } catch {
+      toast.error("Error deleting deal");
     }
   };
 
@@ -243,7 +250,7 @@ export default function DealCard({
                 </AvatarFallback>
               </Avatar>
               <div className="min-w-0">
-                <h2 className="text-lg font-bold text-slate-900 dark:text-white truncate">{deal?.name}</h2>
+                <DialogTitle className="text-lg font-bold text-slate-900 dark:text-white truncate">{deal?.name}</DialogTitle>
                 <p className="text-xs text-slate-500 truncate">{deal?.title || deal?.company}</p>
               </div>
               <Badge className={`ml-1 flex-shrink-0 ${STATUS_COLOR[deal.status] || "bg-slate-400"} text-white border-0 text-[10px] h-5`}>
@@ -421,6 +428,7 @@ export default function DealCard({
       {/* Email Modal */}
       <Dialog open={emailOpen} onOpenChange={setEmailOpen}>
         <DialogContent className="w-[95vw] sm:max-w-4xl h-[90vh] sm:h-[85vh] p-0 overflow-hidden border-0 shadow-2xl mx-auto">
+          <DialogTitle className="sr-only">New Email Message</DialogTitle>
           <EmailTemplate
             type="Deals"
             id={deal.id}

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
+import { deleteCrmRecord } from "@/lib/local-crm";
 
 
 export async function GET(request, context) {
@@ -17,4 +18,17 @@ export async function POST(request, context) {
   const { data, error } = await supabase.from("Leads").update(updates).eq("id", params.id).select();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true, data });
+}
+
+export async function DELETE(request, context) {
+  const params = await context.params;
+  const result = await deleteCrmRecord({
+    table: "Leads",
+    id: params.id,
+    localFile: "local-leads.json",
+  });
+  if (!result.ok) {
+    return NextResponse.json({ error: result.error }, { status: result.status });
+  }
+  return NextResponse.json({ ok: true, id: result.deletedId });
 }

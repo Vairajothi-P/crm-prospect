@@ -1,19 +1,35 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
+import { deleteCrmRecord } from "@/lib/local-crm";
 
-export async function GET(request, { params }) {
+export async function GET(request, context) {
+  const params = await context.params;
   const supabase = await createClient();
   const { data, error } = await supabase.from("Deals").select("*").eq("id", params.id).single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json(data);
 }
 
-export async function POST(request, { params }) {
+export async function POST(request, context) {
+  const params = await context.params;
   const updates = await request.json();
   const supabase = await createClient();
   const { data, error } = await supabase.from("Deals").update(updates).eq("id", params.id).select();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true, data });
+}
+
+export async function DELETE(request, context) {
+  const params = await context.params;
+  const result = await deleteCrmRecord({
+    table: "Deals",
+    id: params.id,
+    localFile: "local-deals.json",
+  });
+  if (!result.ok) {
+    return NextResponse.json({ error: result.error }, { status: result.status });
+  }
+  return NextResponse.json({ ok: true, id: result.deletedId });
 }
 
 

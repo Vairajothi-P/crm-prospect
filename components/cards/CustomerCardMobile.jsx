@@ -72,13 +72,20 @@ export default function CustomerCardMobile({ customer, onChange }) {
   };
 
   const handleDeleteCustomer = async () => {
-    const { error } = await supabase.from("Customers").delete().eq("id", customer.id);
-    if (error) {
-      toast.error("Error deleting customer");
-    } else {
+    try {
+      const res = await fetch(`/api/customers/${encodeURIComponent(customer.id)}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        toast.error("Error deleting customer");
+        return;
+      }
       toast.success("Customer deleted");
+      setDeleteOpen(false);
       setOpen(false);
-      onChange();
+      await onChange?.();
+    } catch {
+      toast.error("Error deleting customer");
     }
   };
 
@@ -180,7 +187,7 @@ export default function CustomerCardMobile({ customer, onChange }) {
 
       {/* ── Mobile Bottom Sheet ── */}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent 
+        <DialogContent
           showCloseButton={false}
           className="fixed bottom-0 left-0 right-0 top-auto translate-x-0 translate-y-0 max-w-full w-full h-[92vh] rounded-t-2xl rounded-b-none flex flex-col p-0 gap-0 border-0 shadow-2xl"
         >
@@ -200,9 +207,9 @@ export default function CustomerCardMobile({ customer, onChange }) {
                 </AvatarFallback>
               </Avatar>
               <div className="min-w-0">
-                <h2 className="text-base font-bold text-slate-900 dark:text-white truncate leading-tight">
+                <DialogTitle className="text-base font-bold text-slate-900 dark:text-white truncate leading-tight">
                   {customer?.name}
-                </h2>
+                </DialogTitle>
                 <div className="flex items-center gap-1.5">
                   <Badge className={`${STATUS_COLOR[customer.status]} text-white border-0 text-[9px] h-4 px-1.5`}>
                     {customer.status}
@@ -253,11 +260,10 @@ export default function CustomerCardMobile({ customer, onChange }) {
               <button
                 key={id}
                 onClick={() => setActiveTab(id)}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold border-b-2 transition-colors ${
-                  activeTab === id
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold border-b-2 transition-colors ${activeTab === id
                     ? "border-teal-500 text-teal-600 dark:text-teal-400"
                     : "border-transparent text-slate-400"
-                }`}
+                  }`}
               >
                 <Icon className="w-3.5 h-3.5" />
                 {label}
@@ -334,17 +340,15 @@ export default function CustomerCardMobile({ customer, onChange }) {
                         key={stage}
                         onClick={() => handleStageClick(stage)}
                         disabled={!isFuture || updatingStatus}
-                        className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl border transition-all active:scale-[0.98] ${
-                          isCurrent
+                        className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl border transition-all active:scale-[0.98] ${isCurrent
                             ? "bg-teal-500 border-teal-500 text-white shadow-md"
                             : isCompleted
                               ? "bg-teal-50 dark:bg-teal-900/10 border-teal-100 dark:border-teal-900 text-teal-400 dark:text-teal-600 opacity-60"
                               : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:border-teal-300"
-                        } ${updatingStatus ? "opacity-50" : ""}`}
+                          } ${updatingStatus ? "opacity-50" : ""}`}
                       >
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 ${
-                          isCurrent ? "bg-white text-teal-500" : isCompleted ? "bg-teal-50 dark:bg-teal-900/10 text-teal-600" : "bg-slate-100 dark:bg-slate-700 text-slate-400"
-                        }`}>
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 ${isCurrent ? "bg-white text-teal-500" : isCompleted ? "bg-teal-50 dark:bg-teal-900/10 text-teal-600" : "bg-slate-100 dark:bg-slate-700 text-slate-400"
+                          }`}>
                           {idx + 1}
                         </div>
                         <span className="text-sm font-medium text-left">{stage}</span>
@@ -395,7 +399,7 @@ export default function CustomerCardMobile({ customer, onChange }) {
 
       {/* Edit Modal */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent 
+        <DialogContent
           showCloseButton={false}
           className="fixed bottom-0 left-0 right-0 top-auto translate-x-0 translate-y-0 max-w-full w-full h-[92vh] rounded-t-2xl rounded-b-none flex flex-col p-0 gap-0 border-0 shadow-2xl"
         >
@@ -403,7 +407,7 @@ export default function CustomerCardMobile({ customer, onChange }) {
             <div className="w-10 h-1 rounded-full bg-slate-200 dark:bg-slate-700" />
           </div>
           <div className="flex items-center justify-between px-4 py-3 border-b bg-white dark:bg-slate-900 flex-shrink-0">
-            <h2 className="text-base font-bold text-slate-900 dark:text-white">Edit Customer</h2>
+            <DialogTitle className="text-base font-bold text-slate-900 dark:text-white">Edit Customer</DialogTitle>
             <button onClick={() => setEditOpen(false)} className="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
               <X className="w-4 h-4 text-slate-500" />
             </button>
@@ -417,6 +421,7 @@ export default function CustomerCardMobile({ customer, onChange }) {
       {/* Email Modal */}
       <Dialog open={emailOpen} onOpenChange={setEmailOpen}>
         <DialogContent className="w-[95vw] sm:max-w-4xl h-[90vh] sm:h-[85vh] p-0 overflow-hidden border-0 shadow-2xl rounded-2xl mx-auto">
+          <DialogTitle className="sr-only">New Email Message</DialogTitle>
           <EmailTemplate
             type="Customers"
             id={customer.id}

@@ -33,6 +33,7 @@ import {
   Dialog,
   DialogContent,
   DialogFooter,
+  DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
@@ -992,10 +993,10 @@ export default function PricingDetailsSection({ selectedDealId, onNext, onBack }
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px] w-[95%] rounded-2xl">
               <div className="p-2 sm:p-4">
-                <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                <DialogTitle className="text-xl font-bold mb-4 flex items-center gap-2">
                   <CheckCircle2 className="h-5 w-5 text-teal-600" />
                   Confirm Approval
-                </h2>
+                </DialogTitle>
                 <p className="text-slate-500 text-sm leading-relaxed">
                   Are you sure you want to approve this deal? Once approved, the pricing details will be locked and a formal quote will be generated.
                 </p>

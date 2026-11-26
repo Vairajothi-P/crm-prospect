@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/utils/supabase/client";
@@ -183,24 +183,42 @@ export default function UpdateCompanyDetails({ onGenerateICP }) {
           .from("Users")
           .select("companyName, companyDescription, companyWebsite, products, id, email")
           .eq("email", userEmail)
-          .single();
-        if (error) throw error;
-        if (!cached) {
-          setCompanyData(data);
-          setProducts(
-            typeof data.products === "string"
-              ? JSON.parse(data.products || "[]")
-              : data.products || []
-          );
+          .maybeSingle();
+        if (!error && data) {
+          if (!cached) {
+            setCompanyData(data);
+            setProducts(
+              typeof data.products === "string"
+                ? JSON.parse(data.products || "[]")
+                : data.products || []
+            );
+          }
+        } else if (!cached) {
+          const rawUser = localStorage.getItem("user");
+          if (rawUser) {
+            try {
+              const parsedUser = JSON.parse(rawUser);
+              setCompanyData(parsedUser);
+              setProducts(
+                typeof parsedUser.products === "string"
+                  ? JSON.parse(parsedUser.products || "[]")
+                  : Array.isArray(parsedUser.products)
+                  ? parsedUser.products
+                  : []
+              );
+            } catch {}
+          }
         }
 
-        const { data: icp } = await supabase
+        const { data: icp, error: icpError } = await supabase
           .from("ICP")
           .select("*")
           .eq("user_email", userEmail)
-          .single();
-        if (icp) setIcpData(icp);
-      } catch (err) { console.error(err); }
+          .maybeSingle();
+        if (!icpError && icp) setIcpData(icp);
+      } catch {
+        // Offline/unavailable Supabase fallback handled via localStorage cache
+      }
     };
     load();
   }, [userEmail]);

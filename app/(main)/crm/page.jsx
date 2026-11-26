@@ -228,24 +228,51 @@ export default function CRM() {
     if (data) setCustomersData(data);
   };
   const fetchLeads = async () => {
-    const { data } = await supabase
-      .from("Leads")
-      .select("*")
-      .eq("user_email", userEmail || "undefined")
-      .order("created_at", { ascending: false });
-    if (data) setLeadsData(data);
+    let leads = [];
+    let fetchedOk = false;
+    try {
+      const { data, error } = await supabase
+        .from("Leads")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (!error && data) {
+        fetchedOk = true;
+        if (data.length) {
+          leads = userEmail ? data.filter(l => !l.user_email || l.user_email === userEmail || l.source?.includes("Prospect")) : data;
+        }
+      }
+    } catch (_) {}
+
+    // Fallback and merge with local leads API
+    try {
+      const res = await fetch("/api/addLeads");
+      if (res.ok) {
+        fetchedOk = true;
+        const local = await res.json();
+        if (Array.isArray(local) && local.length) {
+          const existingIds = new Set(leads.map(l => l.id || l.email));
+          const uniqueLocal = local.filter(l => !existingIds.has(l.id) && (!l.email || !existingIds.has(l.email)));
+          leads = [...uniqueLocal, ...leads];
+        }
+      }
+    } catch (_) {}
+
+    if (fetchedOk) {
+      setLeadsData(leads);
+    }
   };
   const fetchDeals = async () => {
-    const { data } = await supabase
-      .from("Deals")
-      .select("*")
-      .eq("user_email", userEmail || "undefined")
-      .order("created_at", { ascending: false });
-    if (data) setDealsData(data);
+    try {
+      const { data } = await supabase
+        .from("Deals")
+        .select("*")
+        .eq("user_email", userEmail || "undefined")
+        .order("created_at", { ascending: false });
+      if (data) setDealsData(data);
+    } catch (_) {}
   };
 
   useEffect(() => {
-    if (!userEmail) return;
     fetchCustomers();
     fetchLeads();
     fetchDeals();
@@ -253,7 +280,7 @@ export default function CRM() {
       fetchCustomers();
       fetchLeads();
       fetchDeals();
-    }, 60000);
+    }, 4000);
     return () => clearInterval(id);
   }, [userEmail]);
 

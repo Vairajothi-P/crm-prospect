@@ -33,33 +33,51 @@ export default function OurProspects() {
     const fetchData = async () => {
       if (!userEmail) return;
 
-      const { data, error } = await supabase
-        .from("Users")
-        .select("*")
-        .eq("email", userEmail)
-        .single();
+      try {
+        const { data, error } = await supabase
+          .from("Users")
+          .select("*")
+          .eq("email", userEmail)
+          .maybeSingle();
 
-      if (error) {
-        console.error("Error fetching company data:", error);
-      } else {
-        setCompanyData(data);
-      }
+        if (!error && data) {
+          setCompanyData(data);
+        } else {
+          const fallbackRaw =
+            localStorage.getItem("companyDataCache") ||
+            localStorage.getItem("user");
+          if (fallbackRaw) {
+            try {
+              setCompanyData(JSON.parse(fallbackRaw));
+            } catch {}
+          }
+        }
 
-      // Also fetch existing ICP if any
-      const { data: icpData } = await supabase
-        .from("ICP")
-        .select("*")
-        .eq("user_email", userEmail)
-        .single();
+        // Also fetch existing ICP if any
+        const { data: icpData, error: icpErr } = await supabase
+          .from("ICP")
+          .select("*")
+          .eq("user_email", userEmail)
+          .maybeSingle();
 
-      if (icpData) {
-        // Normalize the shape for the UI
-        setResult({
-          ICP: icpData.icp,
-          high_prospect_group: icpData.high,
-          medium_prospect_group: icpData.medium,
-          low_prospect_group: icpData.low
-        });
+        if (!icpErr && icpData) {
+          // Normalize the shape for the UI
+          setResult({
+            ICP: icpData.icp,
+            high_prospect_group: icpData.high,
+            medium_prospect_group: icpData.medium,
+            low_prospect_group: icpData.low
+          });
+        }
+      } catch {
+        const fallbackRaw =
+          localStorage.getItem("companyDataCache") ||
+          localStorage.getItem("user");
+        if (fallbackRaw) {
+          try {
+            setCompanyData(JSON.parse(fallbackRaw));
+          } catch {}
+        }
       }
     };
 

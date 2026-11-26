@@ -207,13 +207,20 @@ export default function LeadCard({ lead, onChange, fetchLeads, fetchDeals }) {
   };
 
   const handleDeleteLead = async () => {
-    const { error } = await supabase.from("Leads").delete().eq("id", lead.id);
-    if (error) {
-      toast.error("Error deleting lead");
-    } else {
+    try {
+      const res = await fetch(`/api/leads/${encodeURIComponent(lead.id)}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        toast.error("Error deleting lead");
+        return;
+      }
       toast.success("Deleted");
+      setDeleteOpen(false);
       setOpen(false);
-      onChange();
+      await onChange?.();
+    } catch {
+      toast.error("Error deleting lead");
     }
   };
 
@@ -271,7 +278,7 @@ export default function LeadCard({ lead, onChange, fetchLeads, fetchDeals }) {
                 </AvatarFallback>
               </Avatar>
               <div className="min-w-0">
-                <h2 className="text-lg font-bold text-slate-900 dark:text-white truncate">{lead?.name}</h2>
+                <DialogTitle className="text-lg font-bold text-slate-900 dark:text-white truncate">{lead?.name}</DialogTitle>
                 <Badge className={`${STATUS_COLOR[lead.status]} text-white border-0 text-[10px] h-5`}>
                   {lead.status}
                 </Badge>
@@ -452,6 +459,7 @@ export default function LeadCard({ lead, onChange, fetchLeads, fetchDeals }) {
       {/* 2. Email Template Modal */}
       <Dialog open={emailOpen} onOpenChange={setEmailOpen}>
         <DialogContent className="w-[95vw] sm:max-w-4xl h-[90vh] sm:h-[85vh] p-0 overflow-hidden border-0 shadow-2xl mx-auto">
+          <DialogTitle className="sr-only">New Email Message</DialogTitle>
           <EmailTemplate
             type="Leads"
             id={lead.id}

@@ -142,13 +142,20 @@ export default function LeadCardMobile({ lead, onChange, fetchLeads, fetchDeals 
   };
 
   const handleDeleteLead = async () => {
-    const { error } = await supabase.from("Leads").delete().eq("id", lead.id);
-    if (error) {
-      toast.error("Error deleting lead");
-    } else {
+    try {
+      const res = await fetch(`/api/leads/${encodeURIComponent(lead.id)}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        toast.error("Error deleting lead");
+        return;
+      }
       toast.success("Deleted");
+      setDeleteOpen(false);
       setOpen(false);
-      onChange();
+      await onChange?.();
+    } catch {
+      toast.error("Error deleting lead");
     }
   };
 
@@ -217,9 +224,9 @@ export default function LeadCardMobile({ lead, onChange, fetchLeads, fetchDeals 
                 </AvatarFallback>
               </Avatar>
               <div className="min-w-0">
-                <h2 className="text-base font-bold text-slate-900 dark:text-white truncate leading-tight">
+                <DialogTitle className="text-base font-bold text-slate-900 dark:text-white truncate leading-tight">
                   {lead?.name}
-                </h2>
+                </DialogTitle>
                 <Badge className={`${STATUS_COLOR[lead.status]} text-white border-0 text-[9px] h-4 px-1.5`}>
                   {lead.status}
                 </Badge>
@@ -391,7 +398,7 @@ export default function LeadCardMobile({ lead, onChange, fetchLeads, fetchDeals 
             <div className="w-10 h-1 rounded-full bg-slate-200 dark:bg-slate-700" />
           </div>
           <div className="flex items-center justify-between px-4 py-3 border-b bg-white dark:bg-slate-900 flex-shrink-0">
-            <h2 className="text-base font-bold text-slate-900 dark:text-white">Edit Lead</h2>
+            <DialogTitle className="text-base font-bold text-slate-900 dark:text-white">Edit Lead</DialogTitle>
             <button
               onClick={() => setEditOpen(false)}
               className="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center"
@@ -413,6 +420,7 @@ export default function LeadCardMobile({ lead, onChange, fetchLeads, fetchDeals 
       {/* Email Modal */}
       <Dialog open={emailOpen} onOpenChange={setEmailOpen}>
         <DialogContent className="w-[95vw] sm:max-w-4xl h-[90vh] sm:h-[85vh] p-0 overflow-hidden border-0 shadow-2xl rounded-2xl mx-auto">
+          <DialogTitle className="sr-only">New Email Message</DialogTitle>
           <EmailTemplate
             type="Leads"
             id={lead.id}
